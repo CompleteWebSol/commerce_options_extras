@@ -1,0 +1,7 @@
+name = Commerce Coptions Extras
+description = Tweaks and Enhancements for Commerce Options
+core = 7.x
+vewrsion = 7.x-1.0
+package = Custom
+
+files[] = views/handlers/commerce_options_extras_handler_field_options.inc
