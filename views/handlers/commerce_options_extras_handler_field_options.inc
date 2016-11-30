@@ -62,10 +62,13 @@ class commerce_options_extras_handler_field_options extends views_handler_field 
     $sku = $values->_field_data['commerce_line_item_field_data_commerce_line_items_line_item_']['entity']->line_item_label;
     $product = commerce_product_load_by_sku($sku);
     // If no options, then we're done.
+//    dpm($product,'product');
+    // find pricing attributes fields
+    /*
     if(!isset($product->field_options) || empty($product->field_options)) {
       return null;
     }
-
+    */
     $options = commerce_option_load_by_line_item($data);
 
     if(empty($options)) {
@@ -73,36 +76,49 @@ class commerce_options_extras_handler_field_options extends views_handler_field 
     }
     $fields = array();
     // lets find the fields
-    $options = reset($options);
-    $info = field_info_instances('commerce_option',$options->set_id);
-    $option_fields = array();
-    /*
-    foreach($info as $key=>$value) {
-      if(isset($options->{$key}[LANGUAGE_NONE])) {
-        if(!isset($option_fields[$key])) {
-          $option_fields[$key] = field_info_field($key);
-        }
-        $option_value = $options->{$key}[LANGUAGE_NONE][0]['value'];
-        $fields[] = array(
-          'data' => $info[$key]['label'] . ':' . $option_fields[$key]['settings']['allowed_values'][$option_value],
-        );
-      }
+    foreach($options as $optid=>$option) {
 
-    }
-    */
-    // kinda heinky but iterate over selected options and get their label/values
-    foreach($product->field_options[LANGUAGE_NONE] as $key=>$value) {
-      foreach($value['set_details'] as $k=>$v) {
-        if(!isset($option_fields[$k])) {
-          $option_fields[$k] = field_info_field($k);
+//    dpm($options,'options');
+      $info = field_info_instances('commerce_option', $option->set_id);
+//    $info = field_read_fields(array('type'=>'commerce_pricing_attributes','bundle'=>$product->type));
+//    dpm($info,'info');
+      $option_fields = array();
+      /*
+      foreach($info as $key=>$value) {
+        if(isset($options->{$key}[LANGUAGE_NONE])) {
+          if(!isset($option_fields[$key])) {
+            $option_fields[$key] = field_info_field($key);
+          }
+          $option_value = $options->{$key}[LANGUAGE_NONE][0]['value'];
+          $fields[] = array(
+            'data' => $info[$key]['label'] . ':' . $option_fields[$key]['settings']['allowed_values'][$option_value],
+          );
         }
-        if(!isset($options->{$k}[LANGUAGE_NONE][0]['value'])) {
-          continue;
+
+      }
+      */
+      // kinda heinky but iterate over selected options and get their label/values
+//    foreach($product->field_options[LANGUAGE_NONE] as $key=>$value) {
+      foreach ($product->{$option->field_name}[LANGUAGE_NONE] as $key => $value) {
+//      dpm($value['set_details'],'Set Details');
+        foreach ($value['set_details'] as $k => $v) {
+          if (!isset($option_fields[$k])) {
+            $option_fields[$k] = field_info_field($k);
+          }
+          if (!isset($option->{$k}[LANGUAGE_NONE][0]['value'])) {
+            continue;
+          }
+          $option_value = $option->{$k}[LANGUAGE_NONE][0]['value'];
+          if($info[$k]['widget']['module'] == 'text') {
+            $fields[] = array(
+              'data' => $info[$k]['label'] . ': ' .$option_value,
+            );
+          } else {
+            $fields[] = array(
+              'data' => $info[$k]['label'] . ': ' . $option_fields[$k]['settings']['allowed_values'][$option_value],
+            );
+          }
         }
-        $option_value = $options->{$k}[LANGUAGE_NONE][0]['value'];
-        $fields[] = array(
-          'data' => $info[$k]['label'] . ':' . $option_fields[$k]['settings']['allowed_values'][$option_value],
-        );
       }
     }
     if(empty($fields)) {
